@@ -1,0 +1,16 @@
+svg {
+	border: 1px solid #000;
+	margin-right:10px;
+}
+
+polygon {
+	fill-opacity:0;
+	stroke:#000;
+	stroke-width:1px;
+}
+
+polyline {
+	fill-opacity:0;
+	stroke:#000;
+	stroke-width:1px;
+}

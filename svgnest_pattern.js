@@ -9,6 +9,7 @@
 	root.SvgNest = new SvgNest();
 	
 	function SvgNest(){
+
 		var self = this;
 		
 		var svg = null;
@@ -18,7 +19,8 @@
 		
 		var parts = null;
 		
-		var tree = null;
+		var tree = [];
+		
 		
 		var bin = null;
 		var binPolygon = null;
@@ -27,8 +29,8 @@
 		var config = {
 			clipperScale: 10000000,
 			curveTolerance: 0.3, 
-			spacing: 0,
-			rotations: 4,
+			spacing: 2,
+			rotations: 1,
 			populationSize: 10,
 			mutationRate: 10,
 			useHoles: false,
@@ -41,6 +43,7 @@
 		var best = null;
 		var workerTimer = null;
 		var progress = 0;
+		var globalPlacement = null;
 		
 		this.parsesvg = function(svgstring){
 			// reset if in progress
@@ -48,17 +51,17 @@
 			
 			bin = null;
 			binPolygon = null;
-			tree = null;
-
+			
 			// parse svg
 			svg = SvgParser.load(svgstring);
-
+			
 			this.style = SvgParser.getStyle();
-
+			
 			svg = SvgParser.clean();
 
+
 			tree = this.getParts(svg.childNodes);
-			console.log(tree);
+
 			//re-order elements such that deeper elements are on top, so they can be moused over
 			function zorder(paths){
 				// depth-first
@@ -69,7 +72,6 @@
 					}
 				}
 			}
-			
 			return svg;
 		}
 		
@@ -140,17 +142,18 @@
 			
 			//part include every element rather the headline number shown in the app
 			parts = Array.prototype.slice.call(svg.childNodes);
-			var binindex = parts.indexOf(bin);
+			/*var binindex = parts.indexOf(bin);
+			//removing this code as bin set separately from SVG
 			if(binindex >= 0){
 				// don't process bin as a part of the tree
 				parts.splice(binindex, 1);
-			}
-			console.log(parts);
-			// build tree without bin removing style
+			}*/
+			// build tree without bin
 			tree = this.getParts(parts.slice(0));
 			console.log(tree);
+			
+
 			offsetTree(tree, 0.5*config.spacing, this.polygonOffset.bind(this));
-			console.log('here2');
 			// offset tree recursively
 			function offsetTree(t, offset, offsetFunction){
 				for(var i=0; i<t.length; i++){
@@ -165,17 +168,12 @@
 					}
 				}
 			}
-			console.log(bin);
-			console.log(typeof bin);
 			binPolygon = SvgParser.polygonify(bin);
-			binPolygon = this.cleanPolygon(binPolygon);
-			console.log('here3');
-			console.log(binPolygon);			
+			binPolygon = this.cleanPolygon(binPolygon);			
 			if(!binPolygon || binPolygon.length < 3){
 				console.log('Failing to convert bin');
 				return false;
 			}
-			console.log('here3.1');
 			binBounds = GeometryUtil.getPolygonBounds(binPolygon);
 				
 			if(config.spacing > 0){
@@ -193,7 +191,7 @@
 			var xbinmin = binPolygon[0].x;
 			var ybinmax = binPolygon[0].y;
 			var ybinmin = binPolygon[0].y;
-			console.log('here4');	
+	
 			for(var i=1; i<binPolygon.length; i++){
 				if(binPolygon[i].x > xbinmax){
 					xbinmax = binPolygon[i].x;
@@ -221,7 +219,7 @@
 			if(GeometryUtil.polygonArea(binPolygon) > 0){
 				binPolygon.reverse();
 			}
-			console.log('here5');	
+
 			// remove duplicate endpoints, ensure counterclockwise winding direction
 			for(i=0; i<tree.length; i++){
 				var start = tree[i][0];
@@ -237,7 +235,7 @@
 			
 			var self = this;
 			this.working = false;
-			console.log('here6');
+
 			workerTimer = setInterval(function(){
 				if(!self.working){
 					self.launchWorkers.call(self, tree, binPolygon, config, progressCallback, displayCallback);
@@ -584,7 +582,7 @@
 								numPlacedParts++;
 							}
 						}
-						displayCallback(self.applyPlacement(best.placements), placedArea/totalArea, numPlacedParts, numParts);
+						displayCallback(self.applyPlacement(best.placements), placedArea/totalArea, numPlacedParts, numParts,best.placements);
 					}
 					else{
 						displayCallback();
@@ -753,7 +751,6 @@
 		
 		// returns an array of SVG elements that represent the placement, for export or rendering
 		this.applyPlacement = function(placement){
-			console.log(placement);
 			var i, j, k;
 			var clone = [];
 			for(i=0; i<parts.length; i++){
