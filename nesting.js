@@ -132,7 +132,7 @@ function initProcess(svg){
 	window.SvgNest.parsesvg(svg);
 	let oParser = new DOMParser();
 	//let oDOM = oParser.parseFromString('<rect x="0" y="0" class="st4" width="510.2" height="283.5"/>', "image/svg+xml");
-	let oDOM = oParser.parseFromString('<rect x="0" y="0" class="st4" width="510.2" height="283.5"/>', "image/svg+xml");
+	let oDOM = oParser.parseFromString('<rect x="0" y="0" class="st4" width="300" height="550"/>', "image/svg+xml");
 	let bin = oDOM.documentElement;
 	console.log(bin);
 	window.SvgNest.setbin(bin);
@@ -149,14 +149,20 @@ function recreateResult(placements){
 	console.log(placements);
 	$('#tempsvg').html('');
 	placements.forEach(function(layout,i){
-		$('#tempsvg').append('<svg id="outputsvg_'+i+'" xmlns="http://www.w3.org/2000/svg"  width="510.2px" height="283.5px" viewport="0 0 510.2 283.5"></svg>');
+		$('#tempsvg').append('<svg id="outputsvg_'+i+'" xmlns="http://www.w3.org/2000/svg"  width="300px" height="550px" viewport="0 0 300 550"></svg>');
 		layout.forEach(function(piece,j){
-			let transformx = piece.id*500 + piece.x
+			let rotation = piece.rotation
+			if(rotation==180){
+				xmultiply = -1
+			} else {
+				xmultiply = 1
+			}
+			let transformx = piece.id*500* xmultiply + piece.x
 			let transformy = piece.y
 			let svgPiece = d3.select('#transform_'+piece.id).selectAll('*').clone(true);
 			let id = 'layout_'+i+'_piece_'+j;
 
-			$('#outputsvg_'+i).append('<g id="layout_'+i+'_piece_'+j+'" transform="translate('+transformx+' '+transformy+') rotate(0)"></g>');
+			$('#outputsvg_'+i).append('<g id="layout_'+i+'_piece_'+j+'" transform="translate('+transformx+' '+transformy+') rotate('+rotation+')"></g>');
 			svgPiece._groups[0].forEach(function(element){
 				$('#'+id).append(element);
 			});
